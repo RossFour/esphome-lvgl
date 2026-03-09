@@ -1,15 +1,39 @@
 sensor:
 
-  # Header Outdoor Temperate
+  # Office Lights
   - platform: homeassistant
-    entity_id: sensor.office_temperature
-    id: office_temperature
-    on_value:
-      - lvgl.label.update:
-          id: temperatures
-          text:
-            format: "%d° / %d°"
-            args: [ '(int)round(id(outdoor_temperature).state)', '(int)round(x)' ]
+    id: office_overheaad_lamp
+    entity_id: light.office_light
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_overheaad_lamp_button
+          state:
+            checked: !lambda return x;
+
+  - platform: homeassistant
+    id: office_desk_lamp
+    entity_id: light.desk_lamp
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_desk_lamp_button
+          state:
+            checked: !lambda return x;
+
+  - platform: homeassistant
+    id: office_shelf_lamp
+    entity_id: light.office_shelf
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_shelf_lamp_button
+          state:
+            checked: !lambda return x;
+
 
   - platform: homeassistant
     entity_id: sensor.outdoor_temperature
