@@ -22,6 +22,9 @@ font:
       "\U000F089E",  # mdi-battery
       "\U000F07DE",  # mdi-filament
       "\U000F0317",  # mdi-lan
+      "\U000F1B20",  # mdi-desk-lamp-on
+      "\U000F17F4",  # mdi-lightbulb-spot
+      "\U000F0769",  # mdi-ceiling-light
       ]
 
 # Map icons to names
@@ -42,4 +45,7 @@ substitutions:
   battery:        "\U000F089E"
   filament:       "\U000F07DE"
   lan:            "\U000F0317"
+  desk_lamp:      "\U000F1B20"
+  spot_light:     "\U000F17F4"
+  ceiling_light:  "\U000F0769"
 

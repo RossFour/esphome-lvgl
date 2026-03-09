@@ -56,11 +56,11 @@ lvgl:
                   text_font: $icon_font
                   align: top_left
                   id: office_overheaad_lamp_icon
-                  text: $nightlight
+                  text: $ceiling_light
               - label:
                   align: bottom_left
                   id: office_overheaad_lamp_label
-                  text: "Network Rack"
+                  text: "Overhead"
             on_click:
               - homeassistant.service:
                   service: light.toggle
@@ -79,7 +79,7 @@ lvgl:
                   text_font: $icon_font
                   align: top_left
                   id: office_desk_lamp_icon
-                  text: $nightlight
+                  text: $desk_lamp
               - label:
                   align: bottom_left
                   id: office_desk_lamp_label
@@ -88,7 +88,7 @@ lvgl:
               - homeassistant.service:
                   service: light.toggle
                   data:
-                    entity_id: light.desk_lamp
+                    entity_id: light.antela_9w_rgb_cct
 
         # Office Shelf Light
         - button: 
@@ -102,11 +102,11 @@ lvgl:
                   text_font: $icon_font
                   align: top_left
                   id: office_shelf_lamp_icon
-                  text: $nightlight
+                  text: $spot_light
               - label:
                   align: bottom_left
                   id: office_shelf_lamp_label
-                  text: "Network Rack"
+                  text: "Shelf"
             on_click:
               - homeassistant.service:
                   service: light.toggle
