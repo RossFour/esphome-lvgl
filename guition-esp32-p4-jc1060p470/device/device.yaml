@@ -10,7 +10,7 @@ esp32:
       enable_idf_experimental_features: true
     sdkconfig_options:
       CONFIG_SPIRAM_XIP_FROM_PSRAM: "y"   # Stop screen flashing during OTA
-      CONFIG_SDMMC_HOST_DEFAULT: "y"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
 
 # Esphome
 esphome:
@@ -57,10 +57,10 @@ esp_ldo:
     id: dsi_phy_enable
     voltage: 2.5V
     adjustable: True
-  - channel: 4
-    id: sd_card_power
-    voltage: 2.7V
-    adjustable: True
+  # - channel: 4
+  #   id: sd_card_power
+  #   voltage: 2.7V
+  #   adjustable: True
 
 # Backlight
 output:
