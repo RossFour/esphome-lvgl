@@ -1,40 +1,5 @@
 sensor:
 
-  # Office Lights
-  - platform: homeassistant
-    id: office_overheaad_lamp
-    entity_id: light.office_light
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_overheaad_lamp_button
-          state:
-            checked: !lambda return x;
-
-  - platform: homeassistant
-    id: office_desk_lamp
-    entity_id: light.desk_lamp
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_desk_lamp_button
-          state:
-            checked: !lambda return x;
-
-  - platform: homeassistant
-    id: office_shelf_lamp
-    entity_id: light.office_shelf
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_shelf_lamp_button
-          state:
-            checked: !lambda return x;
-
-
   - platform: homeassistant
     entity_id: sensor.outdoor_temperature
     id: outdoor_temperature
@@ -76,6 +41,41 @@ sensor:
 
 
 binary_sensor:
+
+  # Office Lights
+  - platform: homeassistant
+    id: office_overheaad_lamp
+    entity_id: light.office_light
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_overheaad_lamp_button
+          state:
+            checked: !lambda return x;
+
+  - platform: homeassistant
+    id: office_desk_lamp
+    entity_id: light.desk_lamp
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_desk_lamp_button
+          state:
+            checked: !lambda return x;
+
+  - platform: homeassistant
+    id: office_shelf_lamp
+    entity_id: light.office_shelf
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id: office_shelf_lamp_button
+          state:
+            checked: !lambda return x;
+
 
   # Office Evening Scene
   - platform: homeassistant
