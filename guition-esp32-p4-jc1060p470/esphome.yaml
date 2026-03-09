@@ -12,6 +12,6 @@ wifi:
 # Packages
 packages:
   setup:
-    url: https://github.com/jtenniswood/esphome-lvgl/
+    url: https://github.com/RossFour/esphome-lvgl/blob/main/
     file: guition-esp32-p4-jc1060p470/package.yaml
     refresh: 1sec
