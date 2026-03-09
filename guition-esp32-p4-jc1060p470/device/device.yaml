@@ -1,5 +1,6 @@
 # Designed for guition-esp32-p4-jc1060p470
 esp32:
+  board: esp32-p4-evboard
   variant: esp32p4
   flash_size: 16MB
   cpu_frequency: 360MHZ
@@ -7,9 +8,6 @@ esp32:
     type: esp-idf
     advanced:
       enable_idf_experimental_features: true
-      disable_vfs_support_termios: false
-      disable_vfs_support_select: false
-      disable_vfs_support_dir: false
     sdkconfig_options:
       CONFIG_SPIRAM_XIP_FROM_PSRAM: "y"   # Stop screen flashing during OTA
       CONFIG_SDMMC_HOST_DEFAULT: "y"
@@ -21,10 +19,10 @@ esphome:
   area: ${room}
 
 # External components
-external_components:
-  - source: github://p1ngb4ck/esphome@dev
-    components: [audio, binary_storage, http_file_browser, nfs_client, picture_viewer, uart, usb_host, usb_uart, usb_storage, sd_storage, smb_client, storage, transcoder, video_player, webdav_server]
-    refresh: 0s
+# external_components:
+#   - source: github://p1ngb4ck/esphome@dev
+#     components: [audio, binary_storage, http_file_browser, nfs_client, picture_viewer, uart, usb_host, usb_uart, usb_storage, sd_storage, smb_client, storage, transcoder, video_player, webdav_server]
+#     refresh: 0s
   
 # Secondary ESP32-C6 device for connectivity
 esp32_hosted:
@@ -40,7 +38,6 @@ esp32_hosted:
 
 # Video memory
 psram:
-  mode: hex
   speed: 200MHz
 
 # Over the Air Updates
