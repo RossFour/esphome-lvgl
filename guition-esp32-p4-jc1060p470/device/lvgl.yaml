@@ -42,6 +42,77 @@ lvgl:
       pad_right: 5
       
       widgets:
+
+
+        # Office Overhead Light
+        - button: 
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: office_overheaad_lamp_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  id: office_overheaad_lamp_icon
+                  text: $nightlight
+              - label:
+                  align: bottom_left
+                  id: office_overheaad_lamp_label
+                  text: "Network Rack"
+            on_click:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.office_light
+
+        # Office Desk Light
+        - button: 
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: office_desk_lamp_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  id: office_desk_lamp_icon
+                  text: $nightlight
+              - label:
+                  align: bottom_left
+                  id: office_desk_lamp_label
+                  text: "Desk"
+            on_click:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.desk_lamp
+
+        # Office Shelf Light
+        - button: 
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: office_shelf_lamp_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  id: office_shelf_lamp_icon
+                  text: $nightlight
+              - label:
+                  align: bottom_left
+                  id: office_shelf_lamp_label
+                  text: "Network Rack"
+            on_click:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.office_shelf
+
       
         # Office Features Scene
         - button: 
