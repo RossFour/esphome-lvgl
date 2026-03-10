@@ -1,10 +1,11 @@
 lvgl:
   displays: my_display
   byte_order: little_endian
-  
+  page_wrap: true
+
   top_layer:
     widgets:
-    
+
       # Temperature
       - label:
           text: "-° / -°"
@@ -25,10 +26,95 @@ lvgl:
           y: 8
           text_align: center
           text_color: 0xFFFFFF
-          
+
+      # Page indicator dots
+      - obj:
+          align: top_right
+          x: -8
+          y: 6
+          height: SIZE_CONTENT
+          width: SIZE_CONTENT
+          bg_opa: TRANSP
+          border_width: 0
+          pad_all: 0
+          layout:
+            type: flex
+            flex_flow: row
+            pad_column: 6
+          widgets:
+            - obj:
+                id: dot_office
+                width: 10
+                height: 10
+                radius: 5
+                bg_color: 0xFF8C00
+                border_width: 0
+                pad_all: 0
+                on_click:
+                  - lvgl.page.show: office_page
+                  - lvgl.widget.update:
+                      id: dot_office
+                      bg_color: 0xFF8C00
+                  - lvgl.widget.update:
+                      id: dot_climate
+                      bg_color: 0x666666
+                  - lvgl.widget.update:
+                      id: dot_home
+                      bg_color: 0x666666
+            - obj:
+                id: dot_climate
+                width: 10
+                height: 10
+                radius: 5
+                bg_color: 0x666666
+                border_width: 0
+                pad_all: 0
+                on_click:
+                  - lvgl.page.show: climate_page
+                  - lvgl.widget.update:
+                      id: dot_office
+                      bg_color: 0x666666
+                  - lvgl.widget.update:
+                      id: dot_climate
+                      bg_color: 0xFF8C00
+                  - lvgl.widget.update:
+                      id: dot_home
+                      bg_color: 0x666666
+            - obj:
+                id: dot_home
+                width: 10
+                height: 10
+                radius: 5
+                bg_color: 0x666666
+                border_width: 0
+                pad_all: 0
+                on_click:
+                  - lvgl.page.show: home_page
+                  - lvgl.widget.update:
+                      id: dot_office
+                      bg_color: 0x666666
+                  - lvgl.widget.update:
+                      id: dot_climate
+                      bg_color: 0x666666
+                  - lvgl.widget.update:
+                      id: dot_home
+                      bg_color: 0xFF8C00
+
+  on_idle:
+    - timeout: 120s
+      then:
+        - switch.turn_off: backlight
+        - lvgl.pause:
+            show_snow: true
+
   pages:
-    - id: main_page
-      layout: 
+
+    # ============================================================
+    # PAGE 1: OFFICE
+    # Lights, thermostat, radiator, aircon, blinds
+    # ============================================================
+    - id: office_page
+      layout:
         type: flex
         flex_flow: column_wrap
         pad_row: 10
@@ -40,12 +126,270 @@ lvgl:
       pad_bottom: 5
       pad_left: 5
       pad_right: 5
-      
+      on_swipe_left:
+        - lvgl.page.next:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0xFF8C00
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0x666666
+      on_swipe_right:
+        - lvgl.page.previous:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0xFF8C00
+
       widgets:
 
+        # All Office Lights (Warm White)
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: all_lights_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $lightbulb
+              - label:
+                  align: bottom_left
+                  text: "All Lights"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return lv_obj_has_state(id(all_lights_button), LV_STATE_CHECKED);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_temp_kelvin: "2700"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_temp_kelvin: "2700"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_temp_kelvin: "2700"
+                  else:
+                    - homeassistant.service:
+                        service: light.turn_off
+                        data:
+                          entity_id: light.office_light
+                    - homeassistant.service:
+                        service: light.turn_off
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                    - homeassistant.service:
+                        service: light.turn_off
+                        data:
+                          entity_id: light.office_shelf
+
+        # Thermostat Display
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: thermostat_button
+            styles: control
+            widgets:
+              - obj:
+                  align: top_left
+                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
+                  clickable: false
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_cross: end
+                  bg_opa: TRANSP
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - label:
+                        text_font: statistics_font
+                        text_color: $button_text_color
+                        id: thermostat_current_label
+                        text: "--"
+                    - label:
+                        text_font: label_font
+                        text_color: $button_text_color
+                        text: "°C"
+                        pad_bottom: 6
+              - label:
+                  align: bottom_left
+                  text: "Thermostat"
+            on_click:
+              - homeassistant.service:
+                  service: climate.toggle
+                  data:
+                    entity_id: climate.dining_room
+
+        # Thermostat Up
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: center
+                  text: $chevron_up
+              - label:
+                  align: bottom_left
+                  text: "Temp Up"
+            on_click:
+              - homeassistant.service:
+                  service: climate.set_temperature
+                  data:
+                    entity_id: climate.dining_room
+                    temperature: !lambda |-
+                      return id(thermostat_target).state + 0.5;
+
+        # Thermostat Down
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: center
+                  text: $chevron_down
+              - label:
+                  align: bottom_left
+                  text: "Temp Down"
+            on_click:
+              - homeassistant.service:
+                  service: climate.set_temperature
+                  data:
+                    entity_id: climate.dining_room
+                    temperature: !lambda |-
+                      return id(thermostat_target).state - 0.5;
+
+        # Office Radiator
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: office_radiator_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $radiator
+              - label:
+                  align: bottom_left
+                  text: "Office Rad"
+            on_click:
+              - homeassistant.service:
+                  service: climate.toggle
+                  data:
+                    entity_id: climate.office_radiator
+
+        # Penthouse Radiator
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: penthouse_radiator_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $radiator
+              - label:
+                  align: bottom_left
+                  text: "Penthouse Rad"
+            on_click:
+              - homeassistant.service:
+                  service: climate.toggle
+                  data:
+                    entity_id: climate.penthouse_radiator
+
+        # Penthouse Lights
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: penthouse_lights_button
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $outdoor_lamp
+              - label:
+                  align: bottom_left
+                  text: "Penthouse"
+            on_click:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.penthouse_lights
+
+
+    # ============================================================
+    # PAGE 2: DEVICES
+    # Vacuum, TV, laundry, dishwasher, solar
+    # ============================================================
+    - id: climate_page
+      layout:
+        type: flex
+        flex_flow: column_wrap
+        pad_row: 10
+        pad_column: 10
+      width: 100%
+      bg_color: Black
+      bg_opa: cover
+      pad_top: 42
+      pad_bottom: 5
+      pad_left: 5
+      pad_right: 5
+      on_swipe_left:
+        - lvgl.page.next:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0xFF8C00
+      on_swipe_right:
+        - lvgl.page.previous:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0xFF8C00
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0x666666
+
+      widgets:
 
         # Office Overhead Light
-        - button: 
+        - button:
             height: $button_height
             width: $button_width
             checkable: true
@@ -68,7 +412,7 @@ lvgl:
                     entity_id: light.office_light
 
         # Office Desk Light
-        - button: 
+        - button:
             height: $button_height
             width: $button_width
             checkable: true
@@ -91,7 +435,7 @@ lvgl:
                     entity_id: light.antela_9w_rgb_cct
 
         # Office Shelf Light
-        - button: 
+        - button:
             height: $button_height
             width: $button_width
             checkable: true
@@ -113,206 +457,667 @@ lvgl:
                   data:
                     entity_id: light.office_shelf
 
-      
-        # Office Features Scene
-        - button: 
+        # Brightness Slider (all office lights)
+        - obj:
             height: $button_height
             width: $button_width
-            checkable: true
-            id: office_scene_features_button
-            styles: control
+            bg_color: $button_control_color
+            radius: $radius
+            pad_all: $padding
+            border_width: 0
             widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: scene_features_icon                
-                  text: $ledstrip
+              - slider:
+                  id: brightness_slider
+                  align: center
+                  width: 170
+                  height: 30
+                  min_value: 0
+                  max_value: 255
+                  value: 128
+                  bg_color: 0x000000
+                  bg_grad_color: 0xFFFFFF
+                  bg_grad_dir: HOR
+                  border_width: 0
+                  radius: 4
+                  indicator:
+                    bg_opa: TRANSP
+                  knob:
+                    radius: 2
+                    width: 6
+                    height: 34
+                    bg_color: 0xFFFFFF
+                    border_width: 0
+                  on_value:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          brightness: !lambda return (int)x;
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          brightness: !lambda return (int)x;
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          brightness: !lambda return (int)x;
               - label:
                   align: bottom_left
-                  id: scene_features_label
-                  text: "Features"
-            on_press:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_features_stateful_scene
+                  text_font: label_font
+                  text_color: $button_text_color
+                  text: "Brightness"
 
-        # Office Calls Scene
-        - button: 
+        # White: Warm (2700K)
+        - button:
             height: $button_height
             width: $button_width
-            checkable: true
-            id: office_scene_calls_button
             styles: control
+            bg_color: 0xFFB347
             widgets:
               - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: office_scene_calls_icon                
-                  text: $videocall
-              - label:
                   align: bottom_left
-                  id: office_scene_calls_label
-                  text: "Calls"
-            on_press:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_calls_stateful_scene
-
-        # Office Evening Scene
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: office_scene_evening_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: office_scene_evening_icon                
-                  text: $nightlight
-              - label:
-                  align: bottom_left
-                  id: office_scene_evening_label
-                  text: "Evening"
-            on_press:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_evening_stateful_scene
-
-        # Office Dimmed Scene
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: office_scene_dimmed_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: office_scene_dimmed_icon                
-                  text: $nightlight
-              - label:
-                  align: bottom_left
-                  id: office_scene_dimmed_label
-                  text: "Dimmed"
-            on_press:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_dimmed_stateful_scene
-
-        # Office Blind 100%
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: office_blind_open_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  text: $blinds_open
-              - label:
-                  align: bottom_left
-                  text: "Open"
+                  text: "Warm"
+                  text_color: 0x000000
             on_click:
               - homeassistant.service:
-                  service: cover.set_cover_position
+                  service: light.turn_on
                   data:
-                    entity_id: cover.office_blind
-                    position: "100"
+                    entity_id: light.office_light
+                    color_temp_kelvin: "2700"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_temp_kelvin: "2700"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_temp_kelvin: "2700"
 
-        # Office Blind 66%
-        - button: 
+        # White: Soft (3500K)
+        - button:
             height: $button_height
             width: $button_width
-            checkable: true
-            id: office_blind_66_button
             styles: control
+            bg_color: 0xFFD8A8
             widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  text: $blinds_open
               - label:
                   align: bottom_left
-                  text: "Semi Open"
+                  text: "Soft"
+                  text_color: 0x000000
             on_click:
               - homeassistant.service:
-                  service: cover.set_cover_position
+                  service: light.turn_on
                   data:
-                    entity_id: cover.office_blind
-                    position: "66"
+                    entity_id: light.office_light
+                    color_temp_kelvin: "3500"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_temp_kelvin: "3500"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_temp_kelvin: "3500"
 
-        # Office Blind 33%
-        - button: 
+        # White: Natural (4000K)
+        - button:
             height: $button_height
             width: $button_width
-            checkable: true
-            id: office_blind_33_button
             styles: control
+            bg_color: 0xFFF0DD
             widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  text: $blinds_open
               - label:
                   align: bottom_left
-                  text: "Semi Closed"
+                  text: "Natural"
+                  text_color: 0x000000
             on_click:
               - homeassistant.service:
-                  service: cover.set_cover_position
+                  service: light.turn_on
                   data:
-                    entity_id: cover.office_blind
-                    position: "33"
+                    entity_id: light.office_light
+                    color_temp_kelvin: "4000"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_temp_kelvin: "4000"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_temp_kelvin: "4000"
 
-        # Office Blind 0%
-        - button: 
+        # White: Cool (5000K)
+        - button:
             height: $button_height
             width: $button_width
-            checkable: true
-            id: office_blind_close_button
             styles: control
+            bg_color: 0xE0E8FF
             widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  text: $blinds_closed
               - label:
                   align: bottom_left
-                  text: "Close"
+                  text: "Cool"
+                  text_color: 0x000000
             on_click:
               - homeassistant.service:
-                  service: cover.set_cover_position
+                  service: light.turn_on
                   data:
-                    entity_id: cover.office_blind
-                    position: "0"
+                    entity_id: light.office_light
+                    color_temp_kelvin: "5000"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_temp_kelvin: "5000"
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_temp_kelvin: "5000"
+
+        # Color: Red
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFF0000
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Red"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: red
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: red
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: red
+
+        # Color: Orange Red
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFF4500
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "OrangeRed"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: orangered
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: orangered
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: orangered
+
+        # Color: Gold
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFFD700
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Gold"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: gold
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: gold
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: gold
+
+        # Color: Yellow
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFFFF00
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Yellow"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: yellow
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: yellow
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: yellow
+
+        # Color: Green
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x00FF00
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Green"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: green
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: green
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: green
+
+        # Color: Spring Green
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x00FF7F
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Spring"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: springgreen
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: springgreen
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: springgreen
+
+        # Color: Deep Sky Blue
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x00BFFF
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Sky Blue"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: deepskyblue
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: deepskyblue
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: deepskyblue
+
+        # Color: Blue
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x0000FF
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Blue"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: blue
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: blue
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: blue
+
+        # Color: Purple
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x8800FF
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Purple"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: purple
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: purple
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: purple
+
+        # Color: Deep Pink
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFF1493
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Pink"
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: deeppink
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: deeppink
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: deeppink
+
+        # Color: Orange
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0xFFA500
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Orange"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: orange
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: orange
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: orange
+
+        # Color: Cyan
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            bg_color: 0x00FFFF
+            widgets:
+              - label:
+                  align: bottom_left
+                  text: "Cyan"
+                  text_color: 0x000000
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_light
+                    color_name: cyan
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.antela_9w_rgb_cct
+                    color_name: cyan
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office_shelf
+                    color_name: cyan
 
 
-        # 3d Printer
-        - button: 
+    # ============================================================
+    # PAGE 3: ENERGY & LAUNDRY
+    # Solar, grid power, washer, dryer
+    # ============================================================
+    - id: home_page
+      layout:
+        type: flex
+        flex_flow: column_wrap
+        pad_row: 10
+        pad_column: 10
+      width: 100%
+      bg_color: Black
+      bg_opa: cover
+      pad_top: 42
+      pad_bottom: 5
+      pad_left: 5
+      pad_right: 5
+      on_swipe_left:
+        - lvgl.page.next:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0xFF8C00
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0x666666
+      on_swipe_right:
+        - lvgl.page.previous:
+        - lvgl.widget.update:
+            id: dot_office
+            bg_color: 0x666666
+        - lvgl.widget.update:
+            id: dot_climate
+            bg_color: 0xFF8C00
+        - lvgl.widget.update:
+            id: dot_home
+            bg_color: 0x666666
+
+      widgets:
+
+        # Solar Power Display
+        - button:
             height: $button_height
             width: $button_width
             checkable: true
-            id: printer_power_button
+            id: solar_button
             styles: control
             widgets:
-              # Icon (shown when OFF)
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: printer_power_icon
-                  text: $printer
-              # Progress (shown when ON)
               - obj:
                   align: top_left
-                  id: print_progress_container
+                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
+                  clickable: false
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_cross: end
+                  bg_opa: TRANSP
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - label:
+                        text_font: statistics_font
+                        text_color: $button_text_color
+                        id: solar_power_label
+                        text: "--"
+                    - label:
+                        text_font: label_font
+                        text_color: $button_text_color
+                        text: "W"
+                        pad_bottom: 6
+              - label:
+                  align: bottom_left
+                  text: "Solar"
+            on_click:
+              - homeassistant.service:
+                  service: switch.toggle
+                  data:
+                    entity_id: switch.inverter_53600dsn198w0085_switch
+
+        # Power Consumed Display
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - obj:
+                  align: top_left
+                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
+                  clickable: false
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_cross: end
+                  bg_opa: TRANSP
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - label:
+                        text_font: statistics_font
+                        text_color: $button_text_color
+                        id: power_consumed_label
+                        text: "--"
+                    - label:
+                        text_font: label_font
+                        text_color: $button_text_color
+                        text: "W"
+                        pad_bottom: 6
+              - label:
+                  align: bottom_left
+                  text: "Grid Power"
+
+        # Power Produced Display
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - obj:
+                  align: top_left
+                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
+                  clickable: false
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_cross: end
+                  bg_opa: TRANSP
+                  border_width: 0
+                  pad_all: 0
+                  widgets:
+                    - label:
+                        text_font: statistics_font
+                        text_color: $button_text_color
+                        id: power_produced_label
+                        text: "--"
+                    - label:
+                        text_font: label_font
+                        text_color: $button_text_color
+                        text: "W"
+                        pad_bottom: 6
+              - label:
+                  align: bottom_left
+                  text: "Produced"
+
+        # Washer
+        - button:
+            height: $button_height
+            width: $button_width
+            checkable: true
+            id: washer_button
+            styles: control
+            widgets:
+              # Icon (shown when idle)
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  id: washer_icon
+                  text: $washing_machine
+              # Power (shown when active)
+              - obj:
+                  align: top_left
+                  id: washer_power_container
                   height: SIZE_CONTENT
                   width: SIZE_CONTENT
                   clickable: false
@@ -328,40 +1133,35 @@ lvgl:
                     - label:
                         text_font: statistics_font
                         text_color: $button_text_color
-                        id: print_progress_label
+                        id: washer_power_label
                         text: "--"
                     - label:
                         text_font: label_font
                         text_color: $button_text_color
-                        text: "%"
+                        text: "W"
                         pad_bottom: 6
               - label:
                   align: bottom_left
-                  text: "Printer"
-            on_click:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_3d_printer_power
+                  text: "Washer"
 
-        # Filament Heater
-        - button: 
+        # Dryer
+        - button:
             height: $button_height
             width: $button_width
             checkable: true
-            id: filament_heater_button
+            id: dryer_button
             styles: control
             widgets:
-              # Icon (shown when OFF)
+              # Icon (shown when idle)
               - label:
                   text_font: $icon_font
                   align: top_left
-                  id: filament_heater_icon
-                  text: $filament
-              # Humidity (shown when ON)
+                  id: dryer_icon
+                  text: $tumble_dryer
+              # Power (shown when active)
               - obj:
                   align: top_left
-                  id: dryer_humidity_container
+                  id: dryer_power_container
                   height: SIZE_CONTENT
                   width: SIZE_CONTENT
                   clickable: false
@@ -377,107 +1177,13 @@ lvgl:
                     - label:
                         text_font: statistics_font
                         text_color: $button_text_color
-                        id: dryer_humidity_label
+                        id: dryer_power_label
                         text: "--"
                     - label:
                         text_font: label_font
                         text_color: $button_text_color
-                        text: "%"
+                        text: "W"
                         pad_bottom: 6
-                        pad_left: -4
               - label:
                   align: bottom_left
                   text: "Dryer"
-            on_click:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.office_filament_heater_893b
-
-        # Office Aircon
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: office_aircon_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  text: $aircon
-              - label:
-                  align: bottom_left
-                  text: "Aircon"
-            on_click:
-              - homeassistant.service:
-                  service: script.office_air_conditioner
-
-        # Battery Charger
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: battery_charger_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: battery_charger_icon
-                  text: $battery
-              - label:
-                  align: bottom_left
-                  id: battery_charger_label
-                  text: "Charger"
-            on_click:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.battery_charger
-
-        # Storage Lights
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: storage_lights_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: storage_lights_icon
-                  text: $package
-              - label:
-                  align: bottom_left
-                  id: storage_lights_label
-                  text: "Storage"
-            on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.office_storage
-
-        # Network Rack
-        - button: 
-            height: $button_height
-            width: $button_width
-            checkable: true
-            id: network_rack_button
-            styles: control
-            widgets:
-              - label:
-                  text_font: $icon_font
-                  align: top_left
-                  id: network_rack_icon
-                  text: $network
-              - label:
-                  align: bottom_left
-                  id: network_rack_label
-                  text: "Network Rack"
-            on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.office_network_rack

@@ -25,6 +25,27 @@ font:
       "\U000F1B20",  # mdi-desk-lamp-on
       "\U000F17F4",  # mdi-lightbulb-spot
       "\U000F0769",  # mdi-ceiling-light
+      "\U000F070D",  # mdi-robot-vacuum
+      "\U000F050F",  # mdi-thermometer
+      "\U000F0502",  # mdi-television
+      "\U000F0210",  # mdi-fan
+      "\U000F0A72",  # mdi-solar-power
+      "\U000F072A",  # mdi-washing-machine
+      "\U000F0438",  # mdi-radiator
+      "\U000F02DC",  # mdi-home
+      "\U000F040E",  # mdi-play-pause
+      "\U000F034E",  # mdi-map-marker
+      "\U000F1B88",  # mdi-awning-outline
+      "\U000F0D91",  # mdi-motion-sensor
+      "\U000F0AAC",  # mdi-dishwasher
+      "\U000F0241",  # mdi-flash
+      "\U000F0143",  # mdi-chevron-up
+      "\U000F0140",  # mdi-chevron-down
+      "\U000F1A45",  # mdi-heat-wave
+      "\U000F04DB",  # mdi-stop
+      "\U000F0917",  # mdi-tumble-dryer
+      "\U000F081C",  # mdi-door-open
+      "\U000F1054",  # mdi-outdoor-lamp
       ]
 
 # Map icons to names
@@ -48,4 +69,24 @@ substitutions:
   desk_lamp:      "\U000F1B20"
   spot_light:     "\U000F17F4"
   ceiling_light:  "\U000F0769"
-
+  robot_vacuum:   "\U000F070D"
+  thermometer:    "\U000F050F"
+  television:     "\U000F0502"
+  fan:            "\U000F0210"
+  solar_power:    "\U000F0A72"
+  washing_machine: "\U000F072A"
+  radiator:       "\U000F0438"
+  home:           "\U000F02DC"
+  play_pause:     "\U000F040E"
+  locate:         "\U000F034E"
+  awning:         "\U000F1B88"
+  motion_sensor:  "\U000F0D91"
+  dishwasher:     "\U000F0AAC"
+  flash:          "\U000F0241"
+  chevron_up:     "\U000F0143"
+  chevron_down:   "\U000F0140"
+  heat_wave:      "\U000F1A45"
+  stop:           "\U000F04DB"
+  tumble_dryer:   "\U000F0917"
+  door_open:      "\U000F081C"
+  outdoor_lamp:   "\U000F1054"

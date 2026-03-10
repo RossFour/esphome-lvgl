@@ -1,0 +1,6 @@
+image:
+  - file: "../esphome-lvgl/guition-esp32-p4-jc1060p470/assets/corner_triangle.png"
+    id: corner_triangle
+    resize: 30x30
+    type: BINARY
+    transparency: chroma_key

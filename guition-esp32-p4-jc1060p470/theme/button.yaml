@@ -12,6 +12,11 @@ lvgl:
   style_definitions:
     - id: control
       bg_color: $button_control_color
+    - id: indicator
+      bg_color: 0x1A1A1A
+      border_width: 1
+      border_color: 0x444444
+      text_color: 0x999999
 
   theme:
     button:

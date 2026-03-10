@@ -1,5 +1,6 @@
 sensor:
 
+  # Temperature (keep)
   - platform: homeassistant
     entity_id: sensor.office_radiator_local_temperature
     id: office_temperature
@@ -20,39 +21,109 @@ sensor:
             format: "%d° / %d°"
             args: [ '(int)round(x)', '(int)round(id(office_temperature).state)' ]
 
-  # Office Blind Position
+  # Thermostat Current Temperature
   - platform: homeassistant
-    entity_id: cover.office_blind
-    id: office_blind_position
-    attribute: current_position
-
-  # Centauri Carbon Print Progress
-  - platform: homeassistant
-    entity_id: sensor.centauri_carbon_percent_complete_helper
-    id: centauri_carbon_percent
+    entity_id: sensor.dining_room_temperature
+    id: thermostat_current
     on_value:
       - lvgl.label.update:
-          id: print_progress_label
+          id: thermostat_current_label
+          text:
+            format: "%.1f"
+            args: [ 'x' ]
+
+  # Thermostat Target Temperature
+  - platform: homeassistant
+    entity_id: sensor.target_temp
+    id: thermostat_target
+
+  # Solar Inverter Power
+  - platform: homeassistant
+    entity_id: sensor.inverter_inverted
+    id: solar_inverted
+    on_value:
+      - lvgl.label.update:
+          id: solar_power_label
+          text:
+            format: "%.0f"
+            args: [ 'x' ]
+      - lvgl.widget.update:
+          id: solar_button
+          state:
+            checked: !lambda return x > 0;
+
+  # Power Consumed
+  - platform: homeassistant
+    entity_id: sensor.power_consumed
+    id: power_consumed
+    on_value:
+      - lvgl.label.update:
+          id: power_consumed_label
           text:
             format: "%.0f"
             args: [ 'x' ]
 
-  # Filament Heater Humidity
+  # Power Produced
   - platform: homeassistant
-    entity_id: sensor.office_filament_heater_sensor_humidity
-    id: filament_heater_humidity
+    entity_id: sensor.power_produced
+    id: power_produced
     on_value:
       - lvgl.label.update:
-          id: dryer_humidity_label
+          id: power_produced_label
           text:
             format: "%.0f"
             args: [ 'x' ]
 
+  # Washer Power
+  - platform: homeassistant
+    entity_id: sensor.laundry_washer_power
+    id: washer_power
+    on_value:
+      - lvgl.label.update:
+          id: washer_power_label
+          text:
+            format: "%.0f"
+            args: [ 'x' ]
+      - lvgl.widget.update:
+          id: washer_icon
+          hidden: !lambda return x > 5;
+      - lvgl.widget.update:
+          id: washer_power_container
+          hidden: !lambda return x <= 5;
+      - lvgl.widget.update:
+          id: washer_button
+          state:
+            checked: !lambda return x > 5;
+
+  # Dryer Power
+  - platform: homeassistant
+    entity_id: sensor.laundry_dryer_power
+    id: dryer_power
+    on_value:
+      - lvgl.label.update:
+          id: dryer_power_label
+          text:
+            format: "%.0f"
+            args: [ 'x' ]
+      - lvgl.widget.update:
+          id: dryer_icon
+          hidden: !lambda return x > 5;
+      - lvgl.widget.update:
+          id: dryer_power_container
+          hidden: !lambda return x <= 5;
+      - lvgl.widget.update:
+          id: dryer_button
+          state:
+            checked: !lambda return x > 5;
 
 
 binary_sensor:
 
-  # Office Lights
+  # ============================================================
+  # PAGE 1: OFFICE
+  # ============================================================
+
+  # Office Lights (keep)
   - platform: homeassistant
     id: office_overheaad_lamp
     entity_id: light.office_light
@@ -86,195 +157,63 @@ binary_sensor:
           state:
             checked: !lambda return x;
 
-
-  # Office Evening Scene
+  # Thermostat (heating state)
   - platform: homeassistant
-    id: office_scene_evening
-    entity_id: switch.office_evening_stateful_scene
+    id: thermostat_heating
+    entity_id: climate.dining_room
+    attribute: hvac_action
     trigger_on_initial_state: true
     on_state:
       then:
         lvgl.widget.update:
-          id: office_scene_evening_button
+          id: thermostat_button
           state:
             checked: !lambda return x;
 
-  # Office Dimmed Scene
+  # Office Radiator
   - platform: homeassistant
-    id: office_scene_dimmed
-    entity_id: switch.office_dimmed_stateful_scene
+    id: office_radiator_state
+    entity_id: climate.office_radiator
     trigger_on_initial_state: true
     on_state:
       then:
         lvgl.widget.update:
-          id: office_scene_dimmed_button
+          id: office_radiator_button
           state:
             checked: !lambda return x;
 
-  # Office Calls Scene
+  # Penthouse Radiator
   - platform: homeassistant
-    id: office_scene_desk_call
-    entity_id: switch.office_calls_stateful_scene
+    id: penthouse_radiator_state
+    entity_id: climate.penthouse_radiator
     trigger_on_initial_state: true
     on_state:
       then:
         lvgl.widget.update:
-          id: office_scene_calls_button
+          id: penthouse_radiator_button
           state:
             checked: !lambda return x;
 
-  # Office Features Scene
+  # Penthouse Lights
   - platform: homeassistant
-    id: office_scene_features
-    entity_id: switch.office_features_stateful_scene
+    id: penthouse_lights_state
+    entity_id: light.penthouse_lights
     trigger_on_initial_state: true
     on_state:
       then:
         lvgl.widget.update:
-          id: office_scene_features_button
+          id: penthouse_lights_button
           state:
             checked: !lambda return x;
 
-  # 3d Printer
+  # All Lights (synced from office overhead)
   - platform: homeassistant
-    id: office_3d_printer_power
-    entity_id: switch.office_3d_printer_power
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        - lvgl.widget.update:
-            id: printer_power_button
-            state:
-              checked: !lambda return x;
-        - lvgl.widget.update:
-            id: printer_power_icon
-            hidden: !lambda return x;
-        - lvgl.widget.update:
-            id: print_progress_container
-            hidden: !lambda return !x;
-
-  # Office Aircon
-  - platform: homeassistant
-    id: office_air_conditioner
-    entity_id: switch.office_air_conditioner
+    id: all_lights_state
+    entity_id: light.office_light
     trigger_on_initial_state: true
     on_state:
       then:
         lvgl.widget.update:
-          id: office_aircon_button
-          state:
-            checked: !lambda return x;
-
-  # Battery Charger
-  - platform: homeassistant
-    id: office_battery_charger
-    entity_id: switch.battery_charger
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: battery_charger_button
-          state:
-            checked: !lambda return x;
-
-  # Filament Heater 
-  - platform: homeassistant
-    id: office_filament_heater
-    entity_id: switch.office_filament_heater_893b
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        - lvgl.widget.update:
-            id: filament_heater_button
-            state:
-              checked: !lambda return x;
-        - lvgl.widget.update:
-            id: filament_heater_icon
-            hidden: !lambda return x;
-        - lvgl.widget.update:
-            id: dryer_humidity_container
-            hidden: !lambda return !x;
-
-  # Office Blind 100% (Open)
-  - platform: template
-    id: office_blind_100
-    lambda: |-
-      if (id(office_blind_position).has_state()) {
-        return abs(id(office_blind_position).state - 100) <= 3;
-      }
-      return false;
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_blind_open_button
-          state:
-            checked: !lambda return x;
-
-  # Office Blind 66% (Semi Open)
-  - platform: template
-    id: office_blind_66
-    lambda: |-
-      if (id(office_blind_position).has_state()) {
-        return abs(id(office_blind_position).state - 66) <= 3;
-      }
-      return false;
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_blind_66_button
-          state:
-            checked: !lambda return x;
-
-  # Office Blind 33% (Semi Closed)
-  - platform: template
-    id: office_blind_33
-    lambda: |-
-      if (id(office_blind_position).has_state()) {
-        return abs(id(office_blind_position).state - 33) <= 3;
-      }
-      return false;
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_blind_33_button
-          state:
-            checked: !lambda return x;
-
-  # Office Blind 0% (Close)
-  - platform: template
-    id: office_blind_0
-    lambda: |-
-      if (id(office_blind_position).has_state()) {
-        return abs(id(office_blind_position).state - 0) <= 3;
-      }
-      return false;
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: office_blind_close_button
-          state:
-            checked: !lambda return x;
-
-  # Office Storage Lights
-  - platform: homeassistant
-    id: office_storage_lights
-    entity_id: light.office_storage
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: storage_lights_button
-          state:
-            checked: !lambda return x;
-
-  # Network Rack
-  - platform: homeassistant
-    id: network_rack
-    entity_id: light.office_network_rack
-    trigger_on_initial_state: true
-    on_state:
-      then:
-        lvgl.widget.update:
-          id: network_rack_button
+          id: all_lights_button
           state:
             checked: !lambda return x;

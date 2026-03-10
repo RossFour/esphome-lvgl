@@ -7,4 +7,5 @@ packages:
   network: !include addon/network.yaml
   fonts: !include assets/fonts.yaml
   icons: !include assets/icons.yaml
+  images: !include assets/images.yaml
   button: !include theme/button.yaml
