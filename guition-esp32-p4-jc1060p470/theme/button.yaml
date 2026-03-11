@@ -22,6 +22,7 @@ lvgl:
     button:
       text_font: label_font
       scroll_on_focus: false
+      gesture_bubble: true
       radius: $radius
       width: $button_width
       height: $button_height

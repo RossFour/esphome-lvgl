@@ -1,3 +1,21 @@
+globals:
+  - id: is_swiping
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+script:
+  - id: set_swiping
+    mode: restart
+    then:
+      - globals.set:
+          id: is_swiping
+          value: 'true'
+      - delay: 500ms
+      - globals.set:
+          id: is_swiping
+          value: 'false'
+
 lvgl:
   displays: my_display
   byte_order: little_endian
@@ -127,6 +145,7 @@ lvgl:
       pad_left: 5
       pad_right: 5
       on_swipe_left:
+        - script.execute: set_swiping
         - lvgl.page.next:
         - lvgl.widget.update:
             id: dot_office
@@ -138,6 +157,7 @@ lvgl:
             id: dot_home
             bg_color: 0x666666
       on_swipe_right:
+        - script.execute: set_swiping
         - lvgl.page.previous:
         - lvgl.widget.update:
             id: dot_office
@@ -169,36 +189,45 @@ lvgl:
             on_click:
               - if:
                   condition:
-                    lambda: 'return lv_obj_has_state(id(all_lights_button), LV_STATE_CHECKED);'
+                    lambda: 'return id(is_swiping);'
                   then:
-                    - homeassistant.service:
-                        service: light.turn_on
-                        data:
-                          entity_id: light.office_light
-                          color_temp_kelvin: "2700"
-                    - homeassistant.service:
-                        service: light.turn_on
-                        data:
-                          entity_id: light.antela_9w_rgb_cct
-                          color_temp_kelvin: "2700"
-                    - homeassistant.service:
-                        service: light.turn_on
-                        data:
-                          entity_id: light.office_shelf
-                          color_temp_kelvin: "2700"
+                    - lvgl.widget.update:
+                        id: all_lights_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(all_lights_button), LV_STATE_CHECKED);'
                   else:
-                    - homeassistant.service:
-                        service: light.turn_off
-                        data:
-                          entity_id: light.office_light
-                    - homeassistant.service:
-                        service: light.turn_off
-                        data:
-                          entity_id: light.antela_9w_rgb_cct
-                    - homeassistant.service:
-                        service: light.turn_off
-                        data:
-                          entity_id: light.office_shelf
+                    - if:
+                        condition:
+                          lambda: 'return lv_obj_has_state(id(all_lights_button), LV_STATE_CHECKED);'
+                        then:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.office_light
+                                color_temp_kelvin: "2700"
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.antela_9w_rgb_cct
+                                color_temp_kelvin: "2700"
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.office_shelf
+                                color_temp_kelvin: "2700"
+                        else:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.office_light
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.antela_9w_rgb_cct
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.office_shelf
 
         # Thermostat Display
         - button:
@@ -235,10 +264,19 @@ lvgl:
                   align: bottom_left
                   text: "Thermostat"
             on_click:
-              - homeassistant.service:
-                  service: climate.toggle
-                  data:
-                    entity_id: climate.dining_room
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: thermostat_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(thermostat_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: climate.toggle
+                        data:
+                          entity_id: climate.dining_room
 
         # Thermostat Up
         - button:
@@ -254,12 +292,16 @@ lvgl:
                   align: bottom_left
                   text: "Temp Up"
             on_click:
-              - homeassistant.service:
-                  service: climate.set_temperature
-                  data:
-                    entity_id: climate.dining_room
-                    temperature: !lambda |-
-                      return id(thermostat_target).state + 0.5;
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: climate.set_temperature
+                        data:
+                          entity_id: climate.dining_room
+                          temperature: !lambda |-
+                            return id(thermostat_target).state + 0.5;
 
         # Thermostat Down
         - button:
@@ -275,12 +317,16 @@ lvgl:
                   align: bottom_left
                   text: "Temp Down"
             on_click:
-              - homeassistant.service:
-                  service: climate.set_temperature
-                  data:
-                    entity_id: climate.dining_room
-                    temperature: !lambda |-
-                      return id(thermostat_target).state - 0.5;
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: climate.set_temperature
+                        data:
+                          entity_id: climate.dining_room
+                          temperature: !lambda |-
+                            return id(thermostat_target).state - 0.5;
 
         # Office Radiator
         - button:
@@ -298,10 +344,19 @@ lvgl:
                   align: bottom_left
                   text: "Office Rad"
             on_click:
-              - homeassistant.service:
-                  service: climate.toggle
-                  data:
-                    entity_id: climate.office_radiator
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: office_radiator_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(office_radiator_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: climate.toggle
+                        data:
+                          entity_id: climate.office_radiator
 
         # Penthouse Radiator
         - button:
@@ -319,10 +374,19 @@ lvgl:
                   align: bottom_left
                   text: "Penthouse Rad"
             on_click:
-              - homeassistant.service:
-                  service: climate.toggle
-                  data:
-                    entity_id: climate.penthouse_radiator
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: penthouse_radiator_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(penthouse_radiator_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: climate.toggle
+                        data:
+                          entity_id: climate.penthouse_radiator
 
         # Penthouse Lights
         - button:
@@ -340,10 +404,19 @@ lvgl:
                   align: bottom_left
                   text: "Penthouse"
             on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.penthouse_lights
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: penthouse_lights_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(penthouse_lights_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: light.toggle
+                        data:
+                          entity_id: light.penthouse_lights
 
 
     # ============================================================
@@ -364,6 +437,7 @@ lvgl:
       pad_left: 5
       pad_right: 5
       on_swipe_left:
+        - script.execute: set_swiping
         - lvgl.page.next:
         - lvgl.widget.update:
             id: dot_office
@@ -375,6 +449,7 @@ lvgl:
             id: dot_home
             bg_color: 0xFF8C00
       on_swipe_right:
+        - script.execute: set_swiping
         - lvgl.page.previous:
         - lvgl.widget.update:
             id: dot_office
@@ -406,10 +481,19 @@ lvgl:
                   id: office_overheaad_lamp_label
                   text: "Overhead"
             on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.office_light
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: office_overheaad_lamp_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(office_overheaad_lamp_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: light.toggle
+                        data:
+                          entity_id: light.office_light
 
         # Office Desk Light
         - button:
@@ -429,10 +513,19 @@ lvgl:
                   id: office_desk_lamp_label
                   text: "Desk"
             on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: office_desk_lamp_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(office_desk_lamp_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: light.toggle
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
 
         # Office Shelf Light
         - button:
@@ -452,10 +545,19 @@ lvgl:
                   id: office_shelf_lamp_label
                   text: "Shelf"
             on_click:
-              - homeassistant.service:
-                  service: light.toggle
-                  data:
-                    entity_id: light.office_shelf
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: office_shelf_lamp_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(office_shelf_lamp_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: light.toggle
+                        data:
+                          entity_id: light.office_shelf
 
         # Brightness Slider (all office lights)
         - obj:
@@ -521,21 +623,25 @@ lvgl:
                   text: "Warm"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_temp_kelvin: "2700"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_temp_kelvin: "2700"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_temp_kelvin: "2700"
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_temp_kelvin: "2700"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_temp_kelvin: "2700"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_temp_kelvin: "2700"
 
         # White: Soft (3500K)
         - button:
@@ -549,21 +655,25 @@ lvgl:
                   text: "Soft"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_temp_kelvin: "3500"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_temp_kelvin: "3500"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_temp_kelvin: "3500"
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_temp_kelvin: "3500"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_temp_kelvin: "3500"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_temp_kelvin: "3500"
 
         # White: Natural (4000K)
         - button:
@@ -577,21 +687,25 @@ lvgl:
                   text: "Natural"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_temp_kelvin: "4000"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_temp_kelvin: "4000"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_temp_kelvin: "4000"
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_temp_kelvin: "4000"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_temp_kelvin: "4000"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_temp_kelvin: "4000"
 
         # White: Cool (5000K)
         - button:
@@ -605,21 +719,25 @@ lvgl:
                   text: "Cool"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_temp_kelvin: "5000"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_temp_kelvin: "5000"
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_temp_kelvin: "5000"
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_temp_kelvin: "5000"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_temp_kelvin: "5000"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_temp_kelvin: "5000"
 
         # Color: Red
         - button:
@@ -632,21 +750,25 @@ lvgl:
                   align: bottom_left
                   text: "Red"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: red
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: red
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: red
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: red
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: red
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: red
 
         # Color: Orange Red
         - button:
@@ -659,21 +781,25 @@ lvgl:
                   align: bottom_left
                   text: "OrangeRed"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: orangered
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: orangered
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: orangered
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: orangered
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: orangered
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: orangered
 
         # Color: Gold
         - button:
@@ -687,21 +813,25 @@ lvgl:
                   text: "Gold"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: gold
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: gold
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: gold
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: gold
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: gold
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: gold
 
         # Color: Yellow
         - button:
@@ -715,21 +845,25 @@ lvgl:
                   text: "Yellow"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: yellow
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: yellow
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: yellow
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: yellow
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: yellow
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: yellow
 
         # Color: Green
         - button:
@@ -743,21 +877,25 @@ lvgl:
                   text: "Green"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: green
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: green
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: green
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: green
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: green
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: green
 
         # Color: Spring Green
         - button:
@@ -771,21 +909,25 @@ lvgl:
                   text: "Spring"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: springgreen
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: springgreen
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: springgreen
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: springgreen
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: springgreen
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: springgreen
 
         # Color: Deep Sky Blue
         - button:
@@ -798,21 +940,25 @@ lvgl:
                   align: bottom_left
                   text: "Sky Blue"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: deepskyblue
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: deepskyblue
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: deepskyblue
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: deepskyblue
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: deepskyblue
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: deepskyblue
 
         # Color: Blue
         - button:
@@ -825,21 +971,25 @@ lvgl:
                   align: bottom_left
                   text: "Blue"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: blue
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: blue
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: blue
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: blue
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: blue
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: blue
 
         # Color: Purple
         - button:
@@ -852,21 +1002,25 @@ lvgl:
                   align: bottom_left
                   text: "Purple"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: purple
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: purple
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: purple
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: purple
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: purple
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: purple
 
         # Color: Deep Pink
         - button:
@@ -879,21 +1033,25 @@ lvgl:
                   align: bottom_left
                   text: "Pink"
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: deeppink
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: deeppink
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: deeppink
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: deeppink
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: deeppink
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: deeppink
 
         # Color: Orange
         - button:
@@ -907,21 +1065,25 @@ lvgl:
                   text: "Orange"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: orange
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: orange
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: orange
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: orange
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: orange
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: orange
 
         # Color: Cyan
         - button:
@@ -935,21 +1097,25 @@ lvgl:
                   text: "Cyan"
                   text_color: 0x000000
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_light
-                    color_name: cyan
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.antela_9w_rgb_cct
-                    color_name: cyan
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: light.office_shelf
-                    color_name: cyan
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_light
+                          color_name: cyan
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.antela_9w_rgb_cct
+                          color_name: cyan
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.office_shelf
+                          color_name: cyan
 
 
     # ============================================================
@@ -970,6 +1136,7 @@ lvgl:
       pad_left: 5
       pad_right: 5
       on_swipe_left:
+        - script.execute: set_swiping
         - lvgl.page.next:
         - lvgl.widget.update:
             id: dot_office
@@ -981,6 +1148,7 @@ lvgl:
             id: dot_home
             bg_color: 0x666666
       on_swipe_right:
+        - script.execute: set_swiping
         - lvgl.page.previous:
         - lvgl.widget.update:
             id: dot_office
@@ -1029,10 +1197,19 @@ lvgl:
                   align: bottom_left
                   text: "Solar"
             on_click:
-              - homeassistant.service:
-                  service: switch.toggle
-                  data:
-                    entity_id: switch.inverter_53600dsn198w0085_switch
+              - if:
+                  condition:
+                    lambda: 'return id(is_swiping);'
+                  then:
+                    - lvgl.widget.update:
+                        id: solar_button
+                        state:
+                          checked: !lambda 'return !lv_obj_has_state(id(solar_button), LV_STATE_CHECKED);'
+                  else:
+                    - homeassistant.service:
+                        service: switch.toggle
+                        data:
+                          entity_id: switch.inverter_53600dsn198w0085_switch
 
         # Power Consumed Display
         - button:
