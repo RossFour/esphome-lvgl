@@ -206,6 +206,11 @@ binary_sensor:
           state:
             checked: !lambda return x;
 
+  # Office Blind Running
+  - platform: homeassistant
+    id: office_blind_running
+    entity_id: binary_sensor.office_blind_running
+
   # All Lights (synced from office overhead)
   - platform: homeassistant
     id: all_lights_state

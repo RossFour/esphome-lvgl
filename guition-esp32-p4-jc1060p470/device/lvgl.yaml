@@ -328,6 +328,138 @@ lvgl:
                           temperature: !lambda |-
                             return id(thermostat_target).state - 0.5;
 
+        # Office Blind Open (100%)
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $blinds_open
+              - label:
+                  align: bottom_left
+                  text: "Open"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - if:
+                        condition:
+                          lambda: 'return id(office_blind_running).state;'
+                        then:
+                          - homeassistant.service:
+                              service: cover.stop_cover
+                              data:
+                                entity_id: cover.office_blind
+                        else:
+                          - homeassistant.service:
+                              service: cover.set_cover_position
+                              data:
+                                entity_id: cover.office_blind
+                                position: "100"
+
+        # Office Blind Pretty Open (71%)
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $blinds_open
+              - label:
+                  align: bottom_left
+                  text: "Pretty Open"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - if:
+                        condition:
+                          lambda: 'return id(office_blind_running).state;'
+                        then:
+                          - homeassistant.service:
+                              service: cover.stop_cover
+                              data:
+                                entity_id: cover.office_blind
+                        else:
+                          - homeassistant.service:
+                              service: cover.set_cover_position
+                              data:
+                                entity_id: cover.office_blind
+                                position: "71"
+
+        # Office Blind Side Light (25%)
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $blinds_open
+              - label:
+                  align: bottom_left
+                  text: "Side Light"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - if:
+                        condition:
+                          lambda: 'return id(office_blind_running).state;'
+                        then:
+                          - homeassistant.service:
+                              service: cover.stop_cover
+                              data:
+                                entity_id: cover.office_blind
+                        else:
+                          - homeassistant.service:
+                              service: cover.set_cover_position
+                              data:
+                                entity_id: cover.office_blind
+                                position: "25"
+
+        # Office Blind Close (0%)
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $blinds_closed
+              - label:
+                  align: bottom_left
+                  text: "Close"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - if:
+                        condition:
+                          lambda: 'return id(office_blind_running).state;'
+                        then:
+                          - homeassistant.service:
+                              service: cover.stop_cover
+                              data:
+                                entity_id: cover.office_blind
+                        else:
+                          - homeassistant.service:
+                              service: cover.set_cover_position
+                              data:
+                                entity_id: cover.office_blind
+                                position: "0"
+
         # Office Radiator
         - button:
             height: $button_height
