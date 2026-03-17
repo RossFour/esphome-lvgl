@@ -46,6 +46,7 @@ font:
       "\U000F0917",  # mdi-tumble-dryer
       "\U000F081C",  # mdi-door-open
       "\U000F1054",  # mdi-outdoor-lamp
+      "\U000F021F",  # mdi-image
       ]
 
 # Map icons to names
@@ -90,3 +91,4 @@ substitutions:
   tumble_dryer:   "\U000F0917"
   door_open:      "\U000F081C"
   outdoor_lamp:   "\U000F1054"
+  image:          "\U000F021F"

@@ -23,107 +23,113 @@ lvgl:
 
   top_layer:
     widgets:
-
-      # Temperature
-      - label:
-          text: "-° / -°"
-          id: temperatures
-          text_font: clockbar_font
-          align: top_left
-          x: 8
-          y: 8
-          text_color: 0xFFFFFF
-
-      # Clock
-      - label:
-          text: "--:--"
-          id: display_time
-          text_font: clockbar_font
-          align: top_mid
-          x: 0
-          y: 8
-          text_align: center
-          text_color: 0xFFFFFF
-
-      # Page indicator dots
       - obj:
-          align: top_right
-          x: -8
-          y: 6
+          id: top_bar
+          width: 100%
           height: SIZE_CONTENT
-          width: SIZE_CONTENT
           bg_opa: TRANSP
           border_width: 0
           pad_all: 0
-          layout:
-            type: flex
-            flex_flow: row
-            pad_column: 6
           widgets:
+
+            # Temperature
+            - label:
+                text: "-° / -°"
+                id: temperatures
+                text_font: clockbar_font
+                align: top_left
+                x: 8
+                y: 8
+                text_color: 0xFFFFFF
+
+            # Clock
+            - label:
+                text: "--:--"
+                id: display_time
+                text_font: clockbar_font
+                align: top_mid
+                x: 0
+                y: 8
+                text_align: center
+                text_color: 0xFFFFFF
+
+            # Page indicator dots
             - obj:
-                id: dot_office
-                width: 10
-                height: 10
-                radius: 5
-                bg_color: 0xFF8C00
+                align: top_right
+                x: -8
+                y: 6
+                height: SIZE_CONTENT
+                width: SIZE_CONTENT
+                bg_opa: TRANSP
                 border_width: 0
                 pad_all: 0
-                on_click:
-                  - lvgl.page.show: office_page
-                  - lvgl.widget.update:
+                layout:
+                  type: flex
+                  flex_flow: row
+                  pad_column: 6
+                widgets:
+                  - obj:
                       id: dot_office
+                      width: 10
+                      height: 10
+                      radius: 5
                       bg_color: 0xFF8C00
-                  - lvgl.widget.update:
+                      border_width: 0
+                      pad_all: 0
+                      on_click:
+                        - lvgl.page.show: office_page
+                        - lvgl.widget.update:
+                            id: dot_office
+                            bg_color: 0xFF8C00
+                        - lvgl.widget.update:
+                            id: dot_climate
+                            bg_color: 0x666666
+                        - lvgl.widget.update:
+                            id: dot_home
+                            bg_color: 0x666666
+                  - obj:
                       id: dot_climate
+                      width: 10
+                      height: 10
+                      radius: 5
                       bg_color: 0x666666
-                  - lvgl.widget.update:
+                      border_width: 0
+                      pad_all: 0
+                      on_click:
+                        - lvgl.page.show: climate_page
+                        - lvgl.widget.update:
+                            id: dot_office
+                            bg_color: 0x666666
+                        - lvgl.widget.update:
+                            id: dot_climate
+                            bg_color: 0xFF8C00
+                        - lvgl.widget.update:
+                            id: dot_home
+                            bg_color: 0x666666
+                  - obj:
                       id: dot_home
+                      width: 10
+                      height: 10
+                      radius: 5
                       bg_color: 0x666666
-            - obj:
-                id: dot_climate
-                width: 10
-                height: 10
-                radius: 5
-                bg_color: 0x666666
-                border_width: 0
-                pad_all: 0
-                on_click:
-                  - lvgl.page.show: climate_page
-                  - lvgl.widget.update:
-                      id: dot_office
-                      bg_color: 0x666666
-                  - lvgl.widget.update:
-                      id: dot_climate
-                      bg_color: 0xFF8C00
-                  - lvgl.widget.update:
-                      id: dot_home
-                      bg_color: 0x666666
-            - obj:
-                id: dot_home
-                width: 10
-                height: 10
-                radius: 5
-                bg_color: 0x666666
-                border_width: 0
-                pad_all: 0
-                on_click:
-                  - lvgl.page.show: home_page
-                  - lvgl.widget.update:
-                      id: dot_office
-                      bg_color: 0x666666
-                  - lvgl.widget.update:
-                      id: dot_climate
-                      bg_color: 0x666666
-                  - lvgl.widget.update:
-                      id: dot_home
-                      bg_color: 0xFF8C00
+                      border_width: 0
+                      pad_all: 0
+                      on_click:
+                        - lvgl.page.show: home_page
+                        - lvgl.widget.update:
+                            id: dot_office
+                            bg_color: 0x666666
+                        - lvgl.widget.update:
+                            id: dot_climate
+                            bg_color: 0x666666
+                        - lvgl.widget.update:
+                            id: dot_home
+                            bg_color: 0xFF8C00
 
   on_idle:
     - timeout: 120s
       then:
-        - switch.turn_off: backlight
-        - lvgl.pause:
-            show_snow: true
+        - script.execute: start_screensaver
 
   pages:
 
@@ -1496,3 +1502,64 @@ lvgl:
               - label:
                   align: bottom_left
                   text: "Dryer"
+
+        # Test Screensaver
+        - button:
+            height: $button_height
+            width: $button_width
+            styles: control
+            widgets:
+              - label:
+                  text_font: $icon_font
+                  align: top_left
+                  text: $image
+              - label:
+                  align: bottom_left
+                  text: "Screensaver"
+            on_click:
+              - if:
+                  condition:
+                    lambda: 'return !id(is_swiping);'
+                  then:
+                    - script.execute: start_screensaver
+
+    # ============================================================
+    # SCREENSAVER: Photo Frame + Clock
+    # ============================================================
+    - id: screensaver_page
+      bg_color: 0x000000
+      skip: true
+      widgets:
+        - image:
+            id: screensaver_image
+            src: slideshow_photo
+            align: CENTER
+        - obj:
+            align: BOTTOM_LEFT
+            x: 20
+            y: -20
+            height: SIZE_CONTENT
+            width: SIZE_CONTENT
+            bg_color: 0x000000
+            bg_opa: 60%
+            radius: 12
+            pad_left: 20
+            pad_right: 20
+            pad_top: 12
+            pad_bottom: 14
+            border_width: 0
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: screensaver_info
+                  text: "-° | ---, --- --"
+                  text_font: clockbar_font
+                  text_color: 0xFFFFFF
+              - label:
+                  id: screensaver_clock
+                  text: "--:--"
+                  text_font: screensaver_font
+                  text_color: 0xFFFFFF

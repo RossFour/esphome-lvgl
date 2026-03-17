@@ -26,3 +26,4 @@ script:
             auto now = id(sntp_time).now();
             snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
             return time_buf;
+      - script.execute: screensaver_time_update

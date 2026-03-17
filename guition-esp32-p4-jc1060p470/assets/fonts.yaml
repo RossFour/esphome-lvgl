@@ -14,3 +14,8 @@ font:
     id: clockbar_font
     size: 20
     bpp: 8
+
+  - file: "gfonts://Roboto@300"
+    id: screensaver_font
+    size: 64
+    bpp: 8

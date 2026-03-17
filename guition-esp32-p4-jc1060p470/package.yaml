@@ -4,6 +4,7 @@ packages:
   lvgl: !include device/lvgl.yaml
   time: !include addon/time.yaml
   backlight: !include addon/backlight.yaml
+  screensaver: !include addon/screensaver.yaml
   network: !include addon/network.yaml
   fonts: !include assets/fonts.yaml
   icons: !include assets/icons.yaml

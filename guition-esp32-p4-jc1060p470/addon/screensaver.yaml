@@ -1,0 +1,100 @@
+# Screensaver - Digital Photo Frame
+# Downloads images from Home Assistant and displays them with a clock overlay when idle
+# Only active on weekdays between 9am and 6pm — otherwise the screen turns off
+
+http_request:
+
+online_image:
+  - id: slideshow_photo
+    url: "http://homeassistant.local:8123/local/slideshow/current.png"
+    format: PNG
+    type: RGB565
+    byte_order: little_endian
+    on_download_finished:
+      - lvgl.image.update:
+          id: screensaver_image
+          src: slideshow_photo
+
+globals:
+  - id: screensaver_active
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(screensaver_active);'
+          then:
+            - component.update: slideshow_photo
+
+script:
+  - id: screensaver_time_update
+    then:
+      - lvgl.label.update:
+          id: screensaver_clock
+          text: !lambda |-
+            static char time_buf[6];
+            auto now = id(sntp_time).now();
+            snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
+            return time_buf;
+      - lvgl.label.update:
+          id: screensaver_info
+          text: !lambda |-
+            static char info_buf[32];
+            static const char* days[] = {"", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+            static const char* months[] = {"", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+            auto now = id(sntp_time).now();
+            int temp = (int)round(id(outdoor_temperature).state);
+            snprintf(info_buf, sizeof(info_buf), "%d° | %s, %s %d",
+              temp, days[now.day_of_week], months[now.month], now.day_of_month);
+            return info_buf;
+
+  - id: start_screensaver
+    then:
+      - if:
+          condition:
+            # Weekdays 9am-5:59pm only
+            lambda: |-
+              auto now = id(sntp_time).now();
+              if (!now.is_valid()) return false;
+              int dow = now.day_of_week;  // 1=Sun, 2=Mon, ..., 7=Sat
+              return (dow >= 2 && dow <= 6) && (now.hour >= 9 && now.hour < 18);
+          then:
+            - globals.set:
+                id: screensaver_active
+                value: 'true'
+            - lvgl.widget.update:
+                id: top_bar
+                hidden: true
+            - script.execute: screensaver_time_update
+            - component.update: slideshow_photo
+            - lvgl.page.show:
+                id: screensaver_page
+                animation: NONE
+            - light.turn_on:
+                id: display_backlight
+                brightness: 40%
+          else:
+            # Outside photo frame hours — blank the screen
+            - switch.turn_off: backlight
+            - lvgl.pause:
+                show_snow: false
+
+  - id: stop_screensaver
+    then:
+      - globals.set:
+          id: screensaver_active
+          value: 'false'
+      - lvgl.widget.update:
+          id: top_bar
+          hidden: false
+      - lvgl.resume:
+      - lvgl.page.show:
+          id: office_page
+          animation: NONE
+      - light.turn_on:
+          id: display_backlight
+          brightness: 100%
